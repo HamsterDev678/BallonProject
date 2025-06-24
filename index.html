@@ -5,37 +5,51 @@
   <title>Pixel Snake Survival</title>
   <style>
     body { margin: 0; overflow: hidden; background: #000; }
-    canvas { display: block; margin: auto; background: #111; }
+    canvas { display: block; margin: auto; background: #1a2f1a; }
     #joystick {
       position: absolute;
       bottom: 30px;
-      left: 30px;
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      touch-action: none;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 120px;
+      display: grid;
+      grid-template-columns: 40px 40px 40px;
+      grid-template-rows: 40px 40px 40px;
+      gap: 0;
     }
-    #stick {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      background: #0f0;
-      border-radius: 50%;
-      top: 30px;
-      left: 30px;
+    .arrow {
+      width: 100%;
+      height: 100%;
+      background: rgba(0,255,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #0f0;
+      user-select: none;
+      font-family: monospace;
+      border: 1px solid #0f0;
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas" width="800" height="600"></canvas>
   <div id="joystick">
-    <div id="stick"></div>
+    <div></div>
+    <div class="arrow" id="up">↑</div>
+    <div></div>
+    <div class="arrow" id="left">←</div>
+    <div></div>
+    <div class="arrow" id="right">→</div>
+    <div></div>
+    <div class="arrow" id="down">↓</div>
+    <div></div>
   </div>
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");const tileSize = 20;
-const mapSize = 2000; // huge map
+const mapSize = 2000;
 let player = {
   x: 100,
   y: 100,
@@ -50,8 +64,6 @@ for (let i = 0; i < 50; i++) {
     y: Math.floor(Math.random() * mapSize / tileSize) * tileSize
   });
 }
-
-// Enemy snakes
 const enemies = [];
 for (let i = 0; i < 3; i++) {
   enemies.push({
@@ -65,26 +77,44 @@ for (let i = 0; i < 3; i++) {
 
 let offsetX = 0;
 let offsetY = 0;
+let growAmount = 0;
+
+function drawGrid() {
+  ctx.strokeStyle = "#264d26";
+  ctx.lineWidth = 0.5;
+  for (let x = -offsetX % tileSize; x < canvas.width; x += tileSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = -offsetY % tileSize; y < canvas.height; y += tileSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+}
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#1a2f1a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   offsetX = player.x - canvas.width / 2;
   offsetY = player.y - canvas.height / 2;
 
-  // Draw food
+  drawGrid();
+
   ctx.fillStyle = "red";
   food.forEach(f => {
     ctx.fillRect(f.x - offsetX, f.y - offsetY, tileSize, tileSize);
   });
 
-  // Draw player snake
-  ctx.fillStyle = "lime";
+  ctx.fillStyle = "#0f0";
   player.body.forEach(segment => {
     ctx.fillRect(segment.x - offsetX, segment.y - offsetY, tileSize, tileSize);
   });
 
-  // Draw enemy snakes
   ctx.fillStyle = "orange";
   enemies.forEach(e => {
     e.body.forEach(segment => {
@@ -97,17 +127,21 @@ function update() {
   const head = { x: player.body[0].x + player.dx * tileSize, y: player.body[0].y + player.dy * tileSize };
   player.body.unshift(head);
 
-  // Makan?
   const index = food.findIndex(f => f.x === head.x && f.y === head.y);
   if (index > -1) {
     food.splice(index, 1);
+    growAmount += 3; // panjangkan saat makan
+  }
+
+  if (growAmount > 0) {
+    growAmount--;
   } else {
     player.body.pop();
   }
+
   player.x = head.x;
   player.y = head.y;
 
-  // Update enemies
   enemies.forEach(e => {
     if (!e.body.length) {
       e.body.push({ x: e.x, y: e.y });
@@ -125,7 +159,6 @@ function update() {
   });
 }
 
-// Keyboard Control
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowUp") { player.dx = 0; player.dy = -1; }
   if (e.key === "ArrowDown") { player.dx = 0; player.dy = 1; }
@@ -133,39 +166,11 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight") { player.dx = 1; player.dy = 0; }
 });
 
-// Joystick Control
-const joystick = document.getElementById("joystick");
-const stick = document.getElementById("stick");
-let dragging = false;
-let startX, startY;
+document.getElementById("up").addEventListener("click", () => { player.dx = 0; player.dy = -1; });
+document.getElementById("down").addEventListener("click", () => { player.dx = 0; player.dy = 1; });
+document.getElementById("left").addEventListener("click", () => { player.dx = -1; player.dy = 0; });
+document.getElementById("right").addEventListener("click", () => { player.dx = 1; player.dy = 0; });
 
-stick.addEventListener("touchstart", (e) => {
-  dragging = true;
-  const touch = e.touches[0];
-  startX = touch.clientX;
-  startY = touch.clientY;
-});
-
-stick.addEventListener("touchmove", (e) => {
-  if (!dragging) return;
-  const touch = e.touches[0];
-  const dx = touch.clientX - startX;
-  const dy = touch.clientY - startY;
-
-  if (Math.abs(dx) > Math.abs(dy)) {
-    player.dx = dx > 0 ? 1 : -1;
-    player.dy = 0;
-  } else {
-    player.dy = dy > 0 ? 1 : -1;
-    player.dx = 0;
-  }
-});
-
-stick.addEventListener("touchend", () => {
-  dragging = false;
-});
-
-// Game loop
 setInterval(() => {
   update();
   draw();
