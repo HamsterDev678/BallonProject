@@ -1,134 +1,176 @@
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Balon Pixel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Snake Survival</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
+    body { margin: 0; overflow: hidden; background: #000; }
+    canvas { display: block; margin: auto; background: #111; }
+    #joystick {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      touch-action: none;
     }
-    canvas {
-      display: block;
+    #stick {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: #0f0;
+      border-radius: 50%;
+      top: 30px;
+      left: 30px;
     }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");const tileSize = 20;
+const mapSize = 2000; // huge map
+let player = {
+  x: 100,
+  y: 100,
+  dx: 1,
+  dy: 0,
+  body: [{x: 100, y: 100}]
+};
+const food = [];
+for (let i = 0; i < 50; i++) {
+  food.push({
+    x: Math.floor(Math.random() * mapSize / tileSize) * tileSize,
+    y: Math.floor(Math.random() * mapSize / tileSize) * tileSize
+  });
+}
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+// Enemy snakes
+const enemies = [];
+for (let i = 0; i < 3; i++) {
+  enemies.push({
+    x: Math.floor(Math.random() * mapSize),
+    y: Math.floor(Math.random() * mapSize),
+    dx: 1,
+    dy: 0,
+    body: []
+  });
+}
 
-    const balloonImg = new Image();
-    balloonImg.src = "balloon.png"; // Pastikan file ini ada di folder yang sama dengan index.html
+let offsetX = 0;
+let offsetY = 0;
 
-    let balloon = {
-      x: canvas.width / 2,
-      y: canvas.height - 100,
-      radius: 30
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  offsetX = player.x - canvas.width / 2;
+  offsetY = player.y - canvas.height / 2;
+
+  // Draw food
+  ctx.fillStyle = "red";
+  food.forEach(f => {
+    ctx.fillRect(f.x - offsetX, f.y - offsetY, tileSize, tileSize);
+  });
+
+  // Draw player snake
+  ctx.fillStyle = "lime";
+  player.body.forEach(segment => {
+    ctx.fillRect(segment.x - offsetX, segment.y - offsetY, tileSize, tileSize);
+  });
+
+  // Draw enemy snakes
+  ctx.fillStyle = "orange";
+  enemies.forEach(e => {
+    e.body.forEach(segment => {
+      ctx.fillRect(segment.x - offsetX, segment.y - offsetY, tileSize, tileSize);
+    });
+  });
+}
+
+function update() {
+  const head = { x: player.body[0].x + player.dx * tileSize, y: player.body[0].y + player.dy * tileSize };
+  player.body.unshift(head);
+
+  // Makan?
+  const index = food.findIndex(f => f.x === head.x && f.y === head.y);
+  if (index > -1) {
+    food.splice(index, 1);
+  } else {
+    player.body.pop();
+  }
+  player.x = head.x;
+  player.y = head.y;
+
+  // Update enemies
+  enemies.forEach(e => {
+    if (!e.body.length) {
+      e.body.push({ x: e.x, y: e.y });
+    }
+    const dir = Math.random() < 0.5 ? [1, 0] : [0, 1];
+    if (Math.random() < 0.5) dir[0] *= -1; else dir[1] *= -1;
+    const newHead = {
+      x: e.body[0].x + dir[0] * tileSize,
+      y: e.body[0].y + dir[1] * tileSize
     };
+    e.body.unshift(newHead);
+    e.body.pop();
+    e.x = newHead.x;
+    e.y = newHead.y;
+  });
+}
 
-    let touchX = balloon.x;
-    let touchY = balloon.y;
+// Keyboard Control
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowUp") { player.dx = 0; player.dy = -1; }
+  if (e.key === "ArrowDown") { player.dx = 0; player.dy = 1; }
+  if (e.key === "ArrowLeft") { player.dx = -1; player.dy = 0; }
+  if (e.key === "ArrowRight") { player.dx = 1; player.dy = 0; }
+});
 
-    let obstacles = [];
-    let gameOver = false;
-    let score = 0;
-    let restartButtonShown = false;
+// Joystick Control
+const joystick = document.getElementById("joystick");
+const stick = document.getElementById("stick");
+let dragging = false;
+let startX, startY;
 
-    canvas.addEventListener('touchmove', function (e) {
-      const touch = e.touches[0];
-      touchX = touch.clientX;
-      touchY = touch.clientY;
-    });
+stick.addEventListener("touchstart", (e) => {
+  dragging = true;
+  const touch = e.touches[0];
+  startX = touch.clientX;
+  startY = touch.clientY;
+});
 
-    function spawnObstacle() {
-      const width = Math.random() * 100 + 50;
-      const x = Math.random() * (canvas.width - width);
-      obstacles.push({
-        x: x,
-        y: -50,
-        width: width,
-        height: 20,
-        dx: Math.random() < 0.5 ? 1 : -1
-      });
-    }
+stick.addEventListener("touchmove", (e) => {
+  if (!dragging) return;
+  const touch = e.touches[0];
+  const dx = touch.clientX - startX;
+  const dy = touch.clientY - startY;
 
-    setInterval(spawnObstacle, 1500);
+  if (Math.abs(dx) > Math.abs(dy)) {
+    player.dx = dx > 0 ? 1 : -1;
+    player.dy = 0;
+  } else {
+    player.dy = dy > 0 ? 1 : -1;
+    player.dx = 0;
+  }
+});
 
-    canvas.addEventListener('click', () => {
-      if (gameOver && restartButtonShown) {
-        location.reload();
-      }
-    });
+stick.addEventListener("touchend", () => {
+  dragging = false;
+});
 
-    function checkCollision(ball, obs) {
-      return (
-        ball.x + ball.radius > obs.x &&
-        ball.x - ball.radius < obs.x + obs.width &&
-        ball.y + ball.radius > obs.y &&
-        ball.y - ball.radius < obs.y + obs.height
-      );
-    }
+// Game loop
+setInterval(() => {
+  update();
+  draw();
+}, 150);
 
-    function draw() {
-      if (gameOver) {
-        ctx.fillStyle = "white";
-        ctx.font = "48px Arial";
-        ctx.fillText("Game Over", canvas.width / 2 - 120, canvas.height / 2);
-        ctx.font = "30px Arial";
-        ctx.fillText("Skor: " + score, canvas.width / 2 - 60, canvas.height / 2 + 40);
-        ctx.font = "24px Arial";
-        ctx.fillText("Klik untuk main lagi", canvas.width / 2 - 100, canvas.height / 2 + 80);
-        restartButtonShown = true;
-        return;
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Signature dev
-      ctx.fillStyle = "white";
-      ctx.font = "20px Arial";
-      ctx.fillText("ChatGPT X AikoDev", canvas.width - 180, 30);
-
-      // Update skor
-      score++;
-
-      // Update balon mendekati jari
-      balloon.x += (touchX - balloon.x) * 0.1;
-      balloon.y += (touchY - balloon.y) * 0.1;
-
-      // Gambar balon pakai gambar PNG
-      ctx.drawImage(balloonImg, balloon.x - balloon.radius, balloon.y - balloon.radius, balloon.radius * 2, balloon.radius * 2);
-
-      // Gerak obstacle
-      for (let i = 0; i < obstacles.length; i++) {
-        let obs = obstacles[i];
-        obs.y += 2;
-        obs.x += obs.dx * 2;
-
-        if (obs.x <= 0 || obs.x + obs.width >= canvas.width) {
-          obs.dx *= -1;
-        }
-
-        ctx.fillStyle = "green";
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-
-        if (checkCollision(balloon, obs)) {
-          gameOver = true;
-        }
-      }
-
-      // Tampilkan skor
-      ctx.fillStyle = "white";
-      ctx.font = "24px Arial";
-      ctx.fillText("Skor: " + score, 20, 40);
-
-      requestAnimationFrame(draw);
-    }
-
-    draw();
-  </script></body>
+  </script>
+</body>
 </html>
