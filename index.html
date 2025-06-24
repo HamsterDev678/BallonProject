@@ -51,8 +51,24 @@
       font-weight: bold;
       cursor: pointer;
     }
-    .controls {
-      margin-top: 10px;
+    .controls-inline {
+      position: absolute;
+      right: -60px;
+      top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      background-color: #a6b48a;
+      border: 2px solid #3b4d36;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 40px;
+      color: #000;
     }
     .game-over {
       position: absolute;
@@ -75,10 +91,11 @@
       <div>Highscore: <span id="highscore">0</span></div>
     </div>
     <canvas id="gameCanvas" width="320" height="320"></canvas>
+    <div class="controls-inline">
+      <div class="icon-btn" onclick="pauseGame()">⏸</div>
+      <div class="icon-btn" onclick="resumeGame()">▶️</div>
+    </div>
     <div class="game-over" id="gameOver">GAME OVER</div>
-  </div>  <div class="controls">
-    <button class="btn" onclick="pauseGame()">Pause</button>
-    <button class="btn" onclick="resumeGame()">Resume</button>
   </div>  <div class="joystick">
     <div></div>
     <div class="btn" id="btn-up">↑</div>
