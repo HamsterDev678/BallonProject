@@ -48,6 +48,7 @@
       justify-content: center;
       user-select: none;
       font-weight: bold;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -60,13 +61,13 @@
     <canvas id="gameCanvas" width="320" height="320"></canvas>
   </div>  <div class="joystick">
     <div></div>
-    <div class="btn" onclick="setDirection(0,-1)">↑</div>
+    <div class="btn" id="btn-up">↑</div>
     <div></div>
-    <div class="btn" onclick="setDirection(-1,0)">←</div>
+    <div class="btn" id="btn-left">←</div>
     <div></div>
-    <div class="btn" onclick="setDirection(1,0)">→</div>
+    <div class="btn" id="btn-right">→</div>
     <div></div>
-    <div class="btn" onclick="setDirection(0,1)">↓</div>
+    <div class="btn" id="btn-down">↓</div>
     <div></div>
   </div>  <script>
     const canvas = document.getElementById("gameCanvas");
@@ -167,6 +168,11 @@
       else if (e.key === "ArrowLeft") setDirection(-1, 0);
       else if (e.key === "ArrowRight") setDirection(1, 0);
     });
+
+    document.getElementById("btn-up").addEventListener("click", () => setDirection(0, -1));
+    document.getElementById("btn-down").addEventListener("click", () => setDirection(0, 1));
+    document.getElementById("btn-left").addEventListener("click", () => setDirection(-1, 0));
+    document.getElementById("btn-right").addEventListener("click", () => setDirection(1, 0));
 
     setInterval(gameLoop, 150);
   </script></body>
