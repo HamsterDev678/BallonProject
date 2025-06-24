@@ -19,6 +19,7 @@
       border: 10px solid #6d7c5e;
       padding: 10px;
       box-shadow: inset 0 0 20px #6d7c5e;
+      position: relative;
     }
     .score {
       display: flex;
@@ -50,6 +51,21 @@
       font-weight: bold;
       cursor: pointer;
     }
+    .controls {
+      margin-top: 10px;
+    }
+    .game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #a6b48a;
+      border: 4px solid #3b4d36;
+      padding: 20px;
+      font-size: 24px;
+      color: black;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -59,6 +75,10 @@
       <div>Highscore: <span id="highscore">0</span></div>
     </div>
     <canvas id="gameCanvas" width="320" height="320"></canvas>
+    <div class="game-over" id="gameOver">GAME OVER</div>
+  </div>  <div class="controls">
+    <button class="btn" onclick="pauseGame()">Pause</button>
+    <button class="btn" onclick="resumeGame()">Resume</button>
   </div>  <div class="joystick">
     <div></div>
     <div class="btn" id="btn-up">↑</div>
@@ -69,18 +89,24 @@
     <div></div>
     <div class="btn" id="btn-down">↓</div>
     <div></div>
-  </div>  <script>
+  </div><audio id="deathSound" src="mario_style_death.wav"></audio>
+
+  <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const tileSize = 20;
     const rows = canvas.height / tileSize;
     const cols = canvas.width / tileSize;
 
+    const deathSound = document.getElementById("deathSound");
+    const gameOverText = document.getElementById("gameOver");
+
     let snake = [{ x: 5, y: 5 }];
     let dx = 1, dy = 0;
     let food = { x: 10, y: 10 };
     let score = 0;
     let highscore = 0;
+    let isPaused = false;
 
     function drawGrid() {
       ctx.strokeStyle = '#c7d3b2';
@@ -111,14 +137,20 @@
     }
 
     function update() {
+      if (isPaused) return;
+
       const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
       if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows || snake.some(s => s.x === head.x && s.y === head.y)) {
-        alert("Game Over");
-        snake = [{ x: 5, y: 5 }];
-        dx = 1; dy = 0;
-        score = 0;
-        updateScore();
+        deathSound.play();
+        gameOverText.style.display = "block";
+        setTimeout(() => {
+          snake = [{ x: 5, y: 5 }];
+          dx = 1; dy = 0;
+          score = 0;
+          updateScore();
+          gameOverText.style.display = "none";
+        }, 2000);
         return;
       }
 
@@ -143,6 +175,8 @@
     }
 
     function draw() {
+      if (isPaused) return;
+
       ctx.fillStyle = '#bfcba4';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       drawGrid();
@@ -153,6 +187,14 @@
     function gameLoop() {
       update();
       draw();
+    }
+
+    function pauseGame() {
+      isPaused = true;
+    }
+
+    function resumeGame() {
+      isPaused = false;
     }
 
     function setDirection(x, y) {
