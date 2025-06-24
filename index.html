@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Balon Terbang</title>
@@ -15,9 +14,9 @@
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-
-  <script>
+  <canvas id="gameCanvas"></canvas>  <div style="position: fixed; top: 10px; right: 10px; font-size: 18px; font-weight: bold; color: gold; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 8px;">
+    🏆 Highscore: <span id="highscoreDisplay">0</span>
+  </div>  <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -38,6 +37,20 @@
     let gameOver = false;
     let score = 0;
     let restartButtonShown = false;
+
+    // Simpan skor tertinggi
+    function simpanHighScore(skorSekarang) {
+      let skorTertinggi = localStorage.getItem('highscore') || 0;
+      if (skorSekarang > skorTertinggi) {
+        localStorage.setItem('highscore', skorSekarang);
+      }
+    }
+
+    // Tampilkan skor tertinggi
+    function tampilkanHighScore() {
+      let skor = localStorage.getItem('highscore') || 0;
+      document.getElementById('highscoreDisplay').innerText = skor;
+    }
 
     // Gerak semua arah (touch)
     canvas.addEventListener('touchmove', function (e) {
@@ -85,6 +98,8 @@
         ctx.font = "24px Arial";
         ctx.fillText("Klik untuk main lagi", canvas.width / 2 - 100, canvas.height / 2 + 80);
         restartButtonShown = true;
+
+        simpanHighScore(score);
         return;
       }
 
@@ -134,7 +149,9 @@
       requestAnimationFrame(draw);
     }
 
-    draw();
-  </script>
-</body>
+    window.onload = function () {
+      tampilkanHighScore();
+      draw();
+    }
+  </script></body>
 </html>
