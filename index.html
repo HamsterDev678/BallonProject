@@ -1,12 +1,12 @@
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Balon Terbang</title>
+  <title>Balon Pixel</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background: skyblue;
+      background: black;
     }
     canvas {
       display: block;
@@ -14,9 +14,7 @@
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>  <div style="position: fixed; top: 10px; right: 10px; font-size: 18px; font-weight: bold; color: gold; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 8px;">
-    🏆 Highscore: <span id="highscoreDisplay">0</span>
-  </div>  <script>
+  <canvas id="gameCanvas"></canvas>  <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -27,7 +25,7 @@
       x: canvas.width / 2,
       y: canvas.height - 100,
       radius: 30,
-      color: "red"
+      color: "white"
     };
 
     let touchX = balloon.x;
@@ -37,20 +35,6 @@
     let gameOver = false;
     let score = 0;
     let restartButtonShown = false;
-
-    // Simpan skor tertinggi
-    function simpanHighScore(skorSekarang) {
-      let skorTertinggi = localStorage.getItem('highscore') || 0;
-      if (skorSekarang > skorTertinggi) {
-        localStorage.setItem('highscore', skorSekarang);
-      }
-    }
-
-    // Tampilkan skor tertinggi
-    function tampilkanHighScore() {
-      let skor = localStorage.getItem('highscore') || 0;
-      document.getElementById('highscoreDisplay').innerText = skor;
-    }
 
     // Gerak semua arah (touch)
     canvas.addEventListener('touchmove', function (e) {
@@ -90,7 +74,7 @@
 
     function draw() {
       if (gameOver) {
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "white";
         ctx.font = "48px Arial";
         ctx.fillText("Game Over", canvas.width / 2 - 120, canvas.height / 2);
         ctx.font = "30px Arial";
@@ -98,15 +82,13 @@
         ctx.font = "24px Arial";
         ctx.fillText("Klik untuk main lagi", canvas.width / 2 - 100, canvas.height / 2 + 80);
         restartButtonShown = true;
-
-        simpanHighScore(score);
         return;
       }
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Signature dev
-      ctx.fillStyle = "black";
+      ctx.fillStyle = "white";
       ctx.font = "20px Arial";
       ctx.fillText("ChatGPT X AikoDev", canvas.width - 180, 30);
 
@@ -117,11 +99,9 @@
       balloon.x += (touchX - balloon.x) * 0.1;
       balloon.y += (touchY - balloon.y) * 0.1;
 
-      // Gambar balon
-      ctx.beginPath();
-      ctx.arc(balloon.x, balloon.y, balloon.radius, 0, Math.PI * 2);
+      // Gambar balon (pixel style)
       ctx.fillStyle = balloon.color;
-      ctx.fill();
+      ctx.fillRect(balloon.x - balloon.radius, balloon.y - balloon.radius, balloon.radius * 2, balloon.radius * 2);
 
       // Gerak obstacle
       for (let i = 0; i < obstacles.length; i++) {
@@ -149,9 +129,6 @@
       requestAnimationFrame(draw);
     }
 
-    window.onload = function () {
-      tampilkanHighScore();
-      draw();
-    }
+    draw();
   </script></body>
 </html>
