@@ -21,11 +21,13 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    const balloonImg = new Image();
+    balloonImg.src = "balloon.png"; // Pastikan file ini ada di folder yang sama dengan index.html
+
     let balloon = {
       x: canvas.width / 2,
       y: canvas.height - 100,
-      radius: 30,
-      color: "white"
+      radius: 30
     };
 
     let touchX = balloon.x;
@@ -36,7 +38,6 @@
     let score = 0;
     let restartButtonShown = false;
 
-    // Gerak semua arah (touch)
     canvas.addEventListener('touchmove', function (e) {
       const touch = e.touches[0];
       touchX = touch.clientX;
@@ -99,9 +100,8 @@
       balloon.x += (touchX - balloon.x) * 0.1;
       balloon.y += (touchY - balloon.y) * 0.1;
 
-      // Gambar balon (pixel style)
-      ctx.fillStyle = balloon.color;
-      ctx.fillRect(balloon.x - balloon.radius, balloon.y - balloon.radius, balloon.radius * 2, balloon.radius * 2);
+      // Gambar balon pakai gambar PNG
+      ctx.drawImage(balloonImg, balloon.x - balloon.radius, balloon.y - balloon.radius, balloon.radius * 2, balloon.radius * 2);
 
       // Gerak obstacle
       for (let i = 0; i < obstacles.length; i++) {
