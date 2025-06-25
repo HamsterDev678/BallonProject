@@ -97,7 +97,7 @@
   font-size: 32px;
   font-weight: bold;
   color: #143d00;
-  animation: blink 1s step-start infinite;
+  animation: blink 0.5s step-start 6;
   z-index: 10;
 }
 @keyframes blink {
@@ -147,6 +147,7 @@
     let highscore = 0;
     let isPaused = false;
     let started = false;
+    let isGameOver = false;
 
     function drawGrid() {
       ctx.strokeStyle = '#c7d3b2';
@@ -177,22 +178,14 @@
     }
 
     function update() {
-      if (isPaused || !started) return;
+      if (isPaused || !started || isGameOver) return;
 
       const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
       if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows || snake.some(s => s.x === head.x && s.y === head.y)) {
         deathSound.play();
         gameOverText.style.display = "block";
-        setTimeout(() => {
-          snake = [{ x: 5, y: 5 }];
-          dx = 1; dy = 0;
-          score = 0;
-          updateScore();
-          gameOverText.style.display = "none";
-          started = false;
-          startText.style.display = "block";
-        }, 2000);
+        isGameOver = true;
         return;
       }
 
@@ -217,7 +210,7 @@
     }
 
     function draw() {
-      if (isPaused || !started) return;
+      if (isPaused || !started || isGameOver) return;
 
       ctx.fillStyle = '#bfcba4';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -249,8 +242,16 @@
     function startGame() {
       if (!started) {
         started = true;
-        startText.style.display = "none";
-        startSound.play();
+        try {
+          startSound.volume = 1;
+          startSound.currentTime = 0;
+          startSound.play();
+        } catch(e) {
+          console.log("Autoplay error:", e);
+        }
+        setTimeout(() => {
+          startText.style.display = "none";
+        }, 3000);
         return true;
       }
       return false;
